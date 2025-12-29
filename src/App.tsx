@@ -137,8 +137,7 @@ const App: React.FC<{}> = () => {
                 .filter(attachment=>attachment.type === AttachmentTypes.IMAGE)
                 .map(attachment=>{
                   console.log(handleAttachment?.id)
-                  return <div id={attachment.id}><CandidateImage
-                    key={attachment.id}
+                  return <div key={attachment.id} id={attachment.id}><CandidateImage
                     active={handleAttachment?.id === attachment.id}
                     onClick={()=>{
                       setHandleAttachment(attachment)
