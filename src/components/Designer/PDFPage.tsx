@@ -128,6 +128,12 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
         });
       } else {
         const isActive = canvas.getActiveObject() === existing;
+        
+        // Always sync text/value even if active
+        if (existing.isType('i-text')) {
+          (existing as IText).set({ text: field.value || '' });
+        }
+
         if (!isActive) {
           existing.set({
             left: field.x * canvas.width!,
@@ -139,16 +145,14 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
               scaleX: (field.width * canvas.width!) / existing.width!,
               scaleY: (field.height * canvas.height!) / existing.height!,
             });
-          } else if (existing.isType('i-text')) {
-            (existing as IText).set({ text: field.value || '' });
-          } else {
+          } else if (!existing.isType('i-text')) {
             existing.set({
               width: (field.width * canvas.width!) / (existing.scaleX || 1),
               height: (field.height * canvas.height!) / (existing.scaleY || 1),
             });
           }
-          existing.setCoords();
         }
+        existing.setCoords();
       }
     });
 
