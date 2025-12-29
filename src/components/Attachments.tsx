@@ -85,7 +85,6 @@ export const Attachments: React.FC<Props> = (
       return (
         <DraggableImage
           key={key}
-          id={key}
           hidden={draggingId === attachment.id}
           pageWidth={pageDimensions.width}
           pageHeight={pageDimensions.height}
@@ -98,7 +97,6 @@ export const Attachments: React.FC<Props> = (
       return (
         <DraggableText
           key={key}
-          id={key}
           hidden={draggingId === attachment.id}
           pageWidth={pageDimensions.width}
           pageHeight={pageDimensions.height}
@@ -152,7 +150,7 @@ export const Attachments: React.FC<Props> = (
         <DndContext
           sensors={[mouseSensor]}
           onDragStart={event => {
-            setDraggingId(event.active.id)
+            setDraggingId(event.active.id as string)
             setInitialWindowScroll({
               x: ref?.current?.scrollLeft || 0,
               y: ref?.current?.scrollTop || 0,
@@ -171,7 +169,7 @@ export const Attachments: React.FC<Props> = (
                 column_id: undefined,
               }
             }
-            handleAttachmentUpdate(event.active.id)(updated)
+            handleAttachmentUpdate(event.active.id as string)(updated)
             setDraggingId(null)
           }}
           onDragCancel={() => setDraggingId(null)}

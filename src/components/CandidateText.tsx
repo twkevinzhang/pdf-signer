@@ -14,7 +14,7 @@ import { DraggableData, DraggableEvent } from 'react-draggable';
 import { Direction } from 're-resizable/lib/resizer';
 import { DraggableImage } from '../containers/DraggableImage';
 import { readAsDataURL, readAsImage } from '../utils/asyncReader';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { AttachmentTypes } from '../entities';
 import { scaleTo } from '../utils/helpers';
 import { Candidate } from './Candidate';

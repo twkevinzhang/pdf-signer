@@ -3,7 +3,7 @@ import { Page } from './Page';
 import { Attachments } from './Attachments';
 import { mockPlacements } from '../models/MockPlacements';
 import { Card } from 'react-bootstrap';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { getResizedAttachment, whichPlacement } from '../utils/helpers';
 import { MouseContext } from '../contexts/MouseContext';
 
@@ -34,14 +34,14 @@ export const Clickable = (
         const attachment = getResizedAttachment(handleAttachment, placement);
         addAttachment({
           ...attachment,
-          id: uuid.v4(),
+          id: uuidv4(),
         })
       }else{
         addAttachment({
           ...handleAttachment,
           x,
           y,
-          id: uuid.v4(),
+          id: uuidv4(),
         })
       }
     }

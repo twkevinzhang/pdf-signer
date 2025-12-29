@@ -2,7 +2,7 @@ import React, { createRef, useState } from 'react';
 import { readAsDataURL, readAsImage, readAsPDF } from '../utils/asyncReader';
 import { Pdf } from './usePdf';
 import { AttachmentTypes } from '../entities';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 export enum UploadTypes {
   PDF = 'pdf',
@@ -61,7 +61,7 @@ export const useUploader = ({
   };
 };
 
-export async function fileToImage(file: File, id: string = uuid.v4()): Promise<ImageAttachment> {
+export async function fileToImage(file: File, id: string = uuidv4()): Promise<ImageAttachment> {
   try {
     const url = await readAsDataURL(file);
     const img = await readAsImage(url as string);

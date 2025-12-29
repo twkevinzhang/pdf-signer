@@ -1,8 +1,7 @@
 import React, { CSSProperties } from 'react';
 import {useDroppable, UniqueIdentifier} from '@dnd-kit/core';
 
-import styles from './Droppable.module.css';
-import classNames from 'classnames';
+
 
 interface Props {
   children: React.ReactNode | null;
