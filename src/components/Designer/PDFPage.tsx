@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as pdfjs from 'pdfjs-dist';
-import * as fabric from 'fabric';
+import { Canvas, Rect, TEvent } from 'fabric';
 import { Theme } from '../../styles/DesignSystem';
 import { useDocument } from '../../application/DocumentStore';
 import { NormalizedCoordinate } from '../../domain/value-objects/Coordinate';
@@ -14,18 +14,18 @@ interface PDFPageProps {
 export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
   const { fields, updateField, setActiveField } = useDocument();
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricRef = useRef<any>(null);
+  const fabricRef = useRef<Canvas | null>(null);
 
   const syncFieldToDomain = (obj: any) => {
     const canvas = fabricRef.current;
-    if (!canvas || !obj.data?.id) return;
+    if (!canvas || !obj.get('data')?.id) return;
 
     const coordinate = NormalizedCoordinate.fromCanvas(
       { x: obj.left!, y: obj.top! },
       { width: canvas.width!, height: canvas.height! }
     );
 
-    updateField(obj.data.id, {
+    updateField(obj.get('data').id, {
       x: coordinate.x,
       y: coordinate.y,
       width: (obj.width! * obj.scaleX!) / canvas.width!,
@@ -35,7 +35,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
 
   const createFabricObject = (field: Field, canvasWidth: number, canvasHeight: number) => {
     const isSignature = field.type === 'signature';
-    const rect = new fabric.fabric.Rect({
+    return new Rect({
       left: field.x * canvasWidth,
       top: field.y * canvasHeight,
       width: field.width * canvasWidth,
@@ -46,10 +46,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       rx: 4,
       ry: 4,
       data: { id: field.id },
-      hasRotatingPoint: false,
     });
-    
-    return rect;
   };
 
   const syncFieldsToFabric = () => {
@@ -59,20 +56,18 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     const pageFields = fields.filter(f => f.page === page.pageNumber);
     const existingObjects = canvas.getObjects();
 
-    // Remove objects that are no longer in state
     existingObjects.forEach((obj: any) => {
-      if (obj.data?.id && !pageFields.find(f => f.id === obj.data.id)) {
+      const data = obj.get('data');
+      if (data?.id && !pageFields.find(f => f.id === data.id)) {
         canvas.remove(obj);
       }
     });
 
-    // Add or Update objects
     pageFields.forEach(field => {
-      const existing = existingObjects.find((obj: any) => obj.data?.id === field.id);
+      const existing = existingObjects.find((obj: any) => obj.get('data')?.id === field.id);
       if (!existing) {
         canvas.add(createFabricObject(field, canvas.width!, canvas.height!));
       } else {
-        // Update position if not currently being dragged by user
         if (!canvas.getActiveObject() || canvas.getActiveObject() !== existing) {
           existing.set({
             left: field.x * canvas.width!,
@@ -91,23 +86,25 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
   const initializeFabric = (width: number, height: number) => {
     if (fabricRef.current) fabricRef.current.dispose();
     
-    // @ts-ignore
-    const canvas = new fabric.fabric.Canvas(`page-${page.pageNumber}`, {
+    const canvas = new Canvas(`page-${page.pageNumber}`, {
       width,
       height,
       selectionColor: 'rgba(0, 113, 227, 0.1)',
       selectionBorderColor: Theme.colors.primary,
     });
 
-    canvas.on('object:modified', (e: any) => e.target && syncFieldToDomain(e.target));
-    canvas.on('selection:created', (e: any) => setActiveField(e.selected?.[0]?.data?.id || null));
+    canvas.on('object:modified', (e: TEvent) => e.target && syncFieldToDomain(e.target));
+    canvas.on('selection:created', (e: TEvent) => {
+      const target = e.selected?.[0];
+      if (target) setActiveField(target.get('data')?.id || null);
+    });
     canvas.on('selection:cleared', () => setActiveField(null));
     
     fabricRef.current = canvas;
     syncFieldsToFabric();
   };
 
-  const renderPdf = async () => {
+  const renderPdfAndInit = async () => {
     const canvas = pdfCanvasRef.current;
     if (!canvas) return;
 
@@ -125,8 +122,12 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
   };
 
   useEffect(() => {
-    renderPdf();
-    return () => fabricRef.current?.dispose();
+    renderPdfAndInit();
+    return () => {
+      if (fabricRef.current) {
+        fabricRef.current.dispose();
+      }
+    };
   }, [page, scale]);
 
   useEffect(() => {

@@ -54,7 +54,7 @@ export const DesignerToolbar: React.FC = () => {
   const handleExport = async () => {
     if (!file) return;
     const bytes = await PdfExportService.export(file, fields);
-    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const blob = new Blob([bytes] as any, { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
