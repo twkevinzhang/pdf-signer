@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as pdfjs from 'pdfjs-dist';
-import { Canvas, Rect, TEvent, FabricImage, IText } from 'fabric';
+import { Canvas, Rect, FabricImage, IText } from 'fabric';
 import { Theme } from '../../styles/DesignSystem';
 import { useDocument } from '../../application/DocumentStore';
 import { NormalizedCoordinate } from '../../domain/value-objects/Coordinate';
@@ -104,7 +104,6 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     pageFields.forEach(field => {
       const existing = existingObjects.find((obj: any) => obj.get('data')?.id === field.id);
       
-      // If value presence changed, we might need recreation (Rect -> Image/Text or vice-versa)
       const isSignature = field.type === 'signature';
       const isText = field.type === 'text' || field.type === 'date';
       const hasValue = !!field.value;
@@ -125,7 +124,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
           canvas.renderAll();
         });
       } else {
-        if (!canvas.getActiveObject() || canvas.getActiveObject() !== existing) {
+        const isActive = canvas.getActiveObject() === existing;
+        if (!isActive) {
           existing.set({
             left: field.x * canvas.width!,
             top: field.y * canvas.height!,
@@ -137,7 +137,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
               scaleY: (field.height * canvas.height!) / existing.height!,
             });
           } else if (existing.isType('i-text')) {
-            existing.set({ text: field.value || '' });
+            (existing as IText).set({ text: field.value || '' });
           } else {
             existing.set({
               width: (field.width * canvas.width!) / (existing.scaleX || 1),
