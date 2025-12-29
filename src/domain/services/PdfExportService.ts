@@ -23,33 +23,10 @@ export class PdfExportService {
       const y = (1 - field.y) * height - field.height * height; // PDF coordinates are from bottom-left
 
       if (
-        field.type === 'signature' ||
-        (field.type === 'stamp' && !field.value)
+        (field.type === 'signature' || field.type === 'stamp') &&
+        field.value
       ) {
-        page.drawRectangle({
-          x,
-          y,
-          width: field.width * width,
-          height: field.height * height,
-          borderColor: rgb(0, 0.44, 0.89),
-          borderWidth: 1,
-          color: rgb(0.9, 0.95, 1),
-        });
-        page.drawText(
-          field.type === 'signature'
-            ? 'Signature Placeholder'
-            : 'Stamp Placeholder',
-          {
-            x: x + 5,
-            y: y + 5,
-            size: 10,
-            font,
-            color: rgb(0, 0.44, 0.89),
-          }
-        );
-      } else if (field.type === 'stamp' && field.value) {
         try {
-          // Embed image (handles both PNG and JPG)
           const imageBytes = Uint8Array.from(
             atob(field.value.split(',')[1]),
             (c) => c.charCodeAt(0)
@@ -65,12 +42,15 @@ export class PdfExportService {
             height: field.height * height,
           });
         } catch (e) {
-          console.error('Failed to embed stamp image:', e);
+          console.error(`Failed to embed ${field.type} image:`, e);
         }
-      } else if (field.type === 'text' || field.type === 'date') {
-        page.drawText(field.value || '', {
+      } else if (
+        field.value &&
+        (field.type === 'text' || field.type === 'date')
+      ) {
+        page.drawText(field.value, {
           x,
-          y: y + (field.height * height) / 2 - 6, // Vertically center text approximately
+          y: y + (field.height * height) / 2 - 6,
           size: 12,
           font,
           color: rgb(0, 0, 0),
