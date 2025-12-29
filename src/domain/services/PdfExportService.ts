@@ -22,10 +22,7 @@ export class PdfExportService {
       const x = field.x * width;
       const y = (1 - field.y) * height - field.height * height; // PDF coordinates are from bottom-left
 
-      if (
-        (field.type === 'signature' || field.type === 'stamp') &&
-        field.value
-      ) {
+      if (field.type === 'signature' && field.value) {
         try {
           const imageBytes = Uint8Array.from(
             atob(field.value.split(',')[1]),
@@ -42,7 +39,7 @@ export class PdfExportService {
             height: field.height * height,
           });
         } catch (e) {
-          console.error(`Failed to embed ${field.type} image:`, e);
+          console.error(`Failed to embed signature image:`, e);
         }
       } else if (
         field.value &&

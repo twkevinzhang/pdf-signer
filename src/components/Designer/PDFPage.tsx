@@ -36,7 +36,6 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
 
   const createFabricObject = (field: Field, canvasWidth: number, canvasHeight: number, onComplete: (obj: any) => void) => {
     const isSignature = field.type === 'signature';
-    const isStamp = field.type === 'stamp';
     const isSigner = appMode === 'signer';
     
     const commonProps = {
@@ -50,7 +49,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       hoverCursor: isSigner ? 'pointer' : 'move',
     };
 
-    if (isStamp && field.value) {
+    if (isSignature && field.value) {
       FabricImage.fromURL(field.value).then((img: any) => {
         img.set({
           ...commonProps,
@@ -66,8 +65,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       ...commonProps,
       width: field.width * canvasWidth,
       height: field.height * canvasHeight,
-      fill: isSignature ? 'rgba(0, 113, 227, 0.15)' : (isStamp ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 255, 255, 0.8)'),
-      stroke: isSignature ? Theme.colors.primary : (isStamp ? '#FF9500' : Theme.colors.border),
+      fill: isSignature ? 'rgba(0, 113, 227, 0.15)' : 'rgba(255, 255, 255, 0.8)',
+      stroke: isSignature ? Theme.colors.primary : Theme.colors.border,
       strokeWidth: 2,
       rx: 4,
       ry: 4,
@@ -93,9 +92,9 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     pageFields.forEach(field => {
       const existing = existingObjects.find((obj: any) => obj.get('data')?.id === field.id);
       
-      // If stamp value changed, we might need to recreation
-      const isStamp = field.type === 'stamp';
-      const needsRecreation = isStamp && existing && ((field.value && !existing.isType('image')) || (!field.value && existing.isType('image')));
+      // If signature value changed (upload/replacement), we might need recreation
+      const isSignature = field.type === 'signature';
+      const needsRecreation = isSignature && existing && ((field.value && !existing.isType('image')) || (!field.value && existing.isType('image')));
 
       if (!existing || needsRecreation) {
         if (needsRecreation) canvas.remove(existing);

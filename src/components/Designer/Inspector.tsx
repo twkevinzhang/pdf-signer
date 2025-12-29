@@ -95,13 +95,13 @@ export const Inspector: React.FC = () => {
       </PropertyGroup>
 
       <PropertyGroup>
-        <Label>{activeField.type === 'stamp' || activeField.type === 'signature' ? (isDesigner ? 'Placeholder (Optional)' : 'Upload Signature/Stamp') : 'Value'}</Label>
-        {activeField.type === 'stamp' || activeField.type === 'signature' ? (
+        <Label>{activeField.type === 'signature' ? (isDesigner ? 'Placeholder (Optional)' : 'Upload Signature') : 'Value'}</Label>
+        {activeField.type === 'signature' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {activeField.value && (
               <img 
                 src={activeField.value} 
-                alt="Stamp/Signature" 
+                alt="Signature" 
                 style={{ width: '100%', height: 'auto', borderRadius: 4, border: `1px solid ${Theme.colors.border}` }} 
               />
             )}
