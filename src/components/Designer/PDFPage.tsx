@@ -93,8 +93,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       selectionBorderColor: Theme.colors.primary,
     });
 
-    canvas.on('object:modified', (e: TEvent) => e.target && syncFieldToDomain(e.target));
-    canvas.on('selection:created', (e: TEvent) => {
+    canvas.on('object:modified', (e: any) => e.target && syncFieldToDomain(e.target));
+    canvas.on('selection:created', (e: any) => {
       const target = e.selected?.[0];
       if (target) setActiveField(target.get('data')?.id || null);
     });

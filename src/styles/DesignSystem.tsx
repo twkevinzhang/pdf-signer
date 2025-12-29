@@ -28,7 +28,7 @@ export const MainLayout = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 `;
 
-export const Sidebar = styled.aside`
+export const SidebarLayout = styled.aside`
   width: 280px;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);

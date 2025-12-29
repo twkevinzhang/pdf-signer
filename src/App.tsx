@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { DocumentProvider, useDocument } from './application/DocumentStore';
-import { MainLayout, Sidebar, CanvasArea, Theme } from './styles/DesignSystem';
+import { MainLayout, SidebarLayout, CanvasArea, Theme } from './styles/DesignSystem';
 import { DesignerToolbar } from './components/Designer/Toolbar';
 import { PDFPage } from './components/Designer/PDFPage';
 import { Inspector } from './components/Designer/Inspector';
-import { FileUp, Layers } from 'lucide-react';
+import { Sidebar } from './components/Designer/Sidebar';
+import { FileUp } from 'lucide-react';
 import styled from 'styled-components';
 
 const UploadPlaceholder = styled.label`
@@ -48,15 +49,7 @@ const SignatureApp: React.FC = () => {
 
   return (
     <MainLayout>
-      <Sidebar>
-        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 32, color: '#1d1d1f' }}>
-          PDF Signer
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: Theme.colors.secondary, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          <Layers size={14} /> Pages
-        </div>
-        {/* 這裡未來可以放頁面縮圖 */}
-      </Sidebar>
+      <Sidebar />
 
       <CanvasArea>
         {!pdfDocument ? (
