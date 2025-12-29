@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-export type FieldType = 'signature' | 'text' | 'date';
+export type FieldType = 'signature' | 'text' | 'date' | 'stamp';
 
 export interface Field {
   id: string;

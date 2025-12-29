@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { MousePointer2, Type, Signature, Calendar, Download } from 'lucide-react';
+import { MousePointer2, Type, Signature, Calendar, Download, Image as ImageIcon } from 'lucide-react';
 import { Theme, UIButton } from '../../styles/DesignSystem';
 import { useDocument } from '../../application/DocumentStore';
 import { FieldFactory, FieldType } from '../../domain/entities/Field';
@@ -117,6 +117,13 @@ export const DesignerToolbar: React.FC = () => {
         onClick={() => handleAddTool('date')}
       >
         <Calendar size={20} />
+      </ToolButton>
+
+      <ToolButton 
+        $active={activeTool === 'stamp'} 
+        onClick={() => handleAddTool('stamp')}
+      >
+        <ImageIcon size={20} />
       </ToolButton>
       
       <div style={{ width: 1, height: 24, background: Theme.colors.border }} />

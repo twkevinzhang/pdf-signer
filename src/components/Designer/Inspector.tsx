@@ -81,13 +81,43 @@ export const Inspector: React.FC = () => {
       </PropertyGroup>
 
       <PropertyGroup>
-        <Label>Placeholder / Label</Label>
-        <Input 
-          disabled={activeField.type === 'signature'}
-          value={activeField.value || ''} 
-          onChange={(e) => updateField(activeField.id, { value: e.target.value })}
-          placeholder="Enter label..."
-        />
+        <Label>{activeField.type === 'stamp' ? 'Stamp Image' : 'Placeholder / Label'}</Label>
+        {activeField.type === 'stamp' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {activeField.value && (
+              <img 
+                src={activeField.value} 
+                alt="Stamp" 
+                style={{ width: '100%', height: 'auto', borderRadius: 4, border: `1px solid ${Theme.colors.border}` }} 
+              />
+            )}
+            <UIButton as="label" style={{ fontSize: 12, textAlign: 'center' }}>
+              Upload Image
+              <input 
+                type="file" 
+                hidden 
+                accept="image/*" 
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (prev) => {
+                      updateField(activeField.id, { value: prev.target?.result as string });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }} 
+              />
+            </UIButton>
+          </div>
+        ) : (
+          <Input 
+            disabled={activeField.type === 'signature'}
+            value={activeField.value || ''} 
+            onChange={(e) => updateField(activeField.id, { value: e.target.value })}
+            placeholder="Enter label..."
+          />
+        )}
       </PropertyGroup>
 
       <CheckboxGroup>

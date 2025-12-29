@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as pdfjs from 'pdfjs-dist';
-import { Canvas, Rect, TEvent } from 'fabric';
+import { Canvas, Rect, TEvent, FabricImage } from 'fabric';
 import { Theme } from '../../styles/DesignSystem';
 import { useDocument } from '../../application/DocumentStore';
 import { NormalizedCoordinate } from '../../domain/value-objects/Coordinate';
@@ -34,20 +34,39 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     });
   };
 
-  const createFabricObject = (field: Field, canvasWidth: number, canvasHeight: number) => {
+  const createFabricObject = (field: Field, canvasWidth: number, canvasHeight: number, onComplete: (obj: any) => void) => {
     const isSignature = field.type === 'signature';
-    return new Rect({
+    const isStamp = field.type === 'stamp';
+    
+    if (isStamp && field.value) {
+      FabricImage.fromURL(field.value).then((img: any) => {
+        img.set({
+          left: field.x * canvasWidth,
+          top: field.y * canvasHeight,
+          scaleX: (field.width * canvasWidth) / img.width!,
+          scaleY: (field.height * canvasHeight) / img.height!,
+          data: { id: field.id },
+          hasRotatingPoint: false,
+        });
+        onComplete(img);
+      });
+      return;
+    }
+
+    const rect = new Rect({
       left: field.x * canvasWidth,
       top: field.y * canvasHeight,
       width: field.width * canvasWidth,
       height: field.height * canvasHeight,
-      fill: isSignature ? 'rgba(0, 113, 227, 0.15)' : 'rgba(255, 255, 255, 0.8)',
-      stroke: isSignature ? Theme.colors.primary : Theme.colors.border,
+      fill: isSignature ? 'rgba(0, 113, 227, 0.15)' : (isStamp ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 255, 255, 0.8)'),
+      stroke: isSignature ? Theme.colors.primary : (isStamp ? '#FF9500' : Theme.colors.border),
       strokeWidth: 2,
       rx: 4,
       ry: 4,
       data: { id: field.id },
     });
+    
+    onComplete(rect);
   };
 
   const syncFieldsToFabric = () => {
@@ -66,16 +85,35 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
 
     pageFields.forEach(field => {
       const existing = existingObjects.find((obj: any) => obj.get('data')?.id === field.id);
-      if (!existing) {
-        canvas.add(createFabricObject(field, canvas.width!, canvas.height!));
+      
+      // If stamp value changed, we might need to recreation
+      const isStamp = field.type === 'stamp';
+      const needsRecreation = isStamp && existing && ((field.value && !existing.isType('image')) || (!field.value && existing.isType('image')));
+
+      if (!existing || needsRecreation) {
+        if (needsRecreation) canvas.remove(existing);
+        createFabricObject(field, canvas.width!, canvas.height!, (obj) => {
+          canvas.add(obj);
+          canvas.renderAll();
+        });
       } else {
         if (!canvas.getActiveObject() || canvas.getActiveObject() !== existing) {
           existing.set({
             left: field.x * canvas.width!,
             top: field.y * canvas.height!,
-            width: (field.width * canvas.width!) / (existing.scaleX || 1),
-            height: (field.height * canvas.height!) / (existing.scaleY || 1),
           });
+          
+          if (existing.isType('image')) {
+            existing.set({
+              scaleX: (field.width * canvas.width!) / existing.width!,
+              scaleY: (field.height * canvas.height!) / existing.height!,
+            });
+          } else {
+            existing.set({
+              width: (field.width * canvas.width!) / (existing.scaleX || 1),
+              height: (field.height * canvas.height!) / (existing.scaleY || 1),
+            });
+          }
           existing.setCoords();
         }
       }
