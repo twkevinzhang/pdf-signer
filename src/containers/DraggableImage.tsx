@@ -3,7 +3,7 @@ import { Image as Component } from '../components/Image';
 import { Position, ResizableDelta, Rnd } from 'react-rnd';
 import { DraggableData, DraggableEvent } from 'react-draggable';
 import { Direction } from 're-resizable/lib/resizer';
-import { BsFillCircleFill, BsXCircleFill } from 'react-icons/all';
+import { BsFillCircleFill, BsXCircleFill } from 'react-icons/bs';
 import { Stone } from '../components/Stone';
 import { Translate, useDraggable } from '@dnd-kit/core';
 import { Resizable, ResizeCallback } from 're-resizable';

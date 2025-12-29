@@ -7,7 +7,7 @@ import { useAttachments } from './hooks/useAttachments';
 import { AttachmentTypes } from './entities';
 import { Attachments as PageAttachments } from './components/Attachments';
 import { UploadTypes, useUploader } from './hooks/useUploader';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { CandidateImage } from './components/CandidateImage';
 import { useDrawer } from './hooks/useDrawer';
 
@@ -50,7 +50,7 @@ const App: React.FC<{}> = () => {
 
   const handleText = () => {
     const newTextAttachment: TextAttachment = {
-      id: uuid.v4(),
+      id: uuidv4(),
       type: AttachmentTypes.TEXT,
       x: 0,
       y: 0,

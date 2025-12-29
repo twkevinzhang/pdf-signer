@@ -5,7 +5,7 @@ import { Rnd } from 'react-rnd';
 import { Translate, useDraggable } from '@dnd-kit/core';
 import { Text } from '../components/Text';
 import { Stone } from '../components/Stone';
-import { BsFillCheckCircleFill, BsPencil, BsXCircleFill } from 'react-icons/all';
+import { BsFillCheckCircleFill, BsPencil, BsXCircleFill } from 'react-icons/bs';
 
 interface Props {
   pageWidth: number;
