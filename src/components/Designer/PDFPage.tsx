@@ -47,6 +47,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       lockMovementX: isSigner,
       lockMovementY: isSigner,
       hasRotatingPoint: false,
+      hoverCursor: isSigner ? 'pointer' : 'move',
     };
 
     if (isStamp && field.value) {
@@ -138,11 +139,14 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       selectionBorderColor: Theme.colors.primary,
     });
 
-    canvas.on('object:modified', (e: any) => e.target && syncFieldToDomain(e.target));
-    canvas.on('selection:created', (e: any) => {
+    const handleSelection = (e: any) => {
       const target = e.selected?.[0];
       if (target) setActiveField(target.get('data')?.id || null);
-    });
+    };
+
+    canvas.on('object:modified', (e: any) => e.target && syncFieldToDomain(e.target));
+    canvas.on('selection:created', handleSelection);
+    canvas.on('selection:updated', handleSelection);
     canvas.on('selection:cleared', () => setActiveField(null));
     
     fabricRef.current = canvas;
