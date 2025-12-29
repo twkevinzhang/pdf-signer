@@ -12,7 +12,7 @@ interface PDFPageProps {
 }
 
 export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
-  const { fields, updateField, setActiveField, appMode } = useDocument();
+  const { fields, activeFieldId, updateField, setActiveField, appMode } = useDocument();
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const renderTaskRef = useRef<any>(null);
@@ -121,6 +121,9 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
         if (needsRecreation) canvas.remove(existing!);
         createFabricObject(field, canvas.width!, canvas.height!, (obj) => {
           canvas.add(obj);
+          if (field.id === activeFieldId) {
+            canvas.setActiveObject(obj);
+          }
           canvas.renderAll();
         });
       } else {
