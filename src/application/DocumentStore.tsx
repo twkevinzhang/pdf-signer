@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Field } from '../domain/entities/Field';
 import * as pdfjs from 'pdfjs-dist';
 
+// Set PDF.js worker from CDN to avoid environment issues in Vite
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
 interface DocumentState {
   file: File | null;
   pdfDocument: pdfjs.PDFDocumentProxy | null;
