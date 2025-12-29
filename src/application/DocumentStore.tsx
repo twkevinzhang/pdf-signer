@@ -10,10 +10,13 @@ interface DocumentState {
   pdfDocument: pdfjs.PDFDocumentProxy | null;
   fields: Field[];
   activeFieldId: string | null;
+  appMode: 'designer' | 'signer' | null;
 }
 
 interface DocumentContextType extends DocumentState {
   setFile: (file: File) => Promise<void>;
+  setAppMode: (mode: 'designer' | 'signer' | null) => void;
+  loadConfig: (json: string) => void;
   addField: (field: Field) => void;
   updateField: (id: string, updates: Partial<Field>) => void;
   removeField: (id: string) => void;
@@ -28,12 +31,28 @@ export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }
     pdfDocument: null,
     fields: [],
     activeFieldId: null,
+    appMode: null,
   });
 
   const setFile = async (file: File) => {
     const arrayBuffer = await file.arrayBuffer();
     const pdfDocument = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-    setState(prev => ({ ...prev, file, pdfDocument, fields: [] }));
+    setState(prev => ({ ...prev, file, pdfDocument }));
+  };
+
+  const setAppMode = (appMode: 'designer' | 'signer' | null) => {
+    setState(prev => ({ ...prev, appMode }));
+  };
+
+  const loadConfig = (json: string) => {
+    try {
+      const config = JSON.parse(json);
+      if (config.fields) {
+        setState(prev => ({ ...prev, fields: config.fields }));
+      }
+    } catch (e) {
+      console.error('Failed to parse config:', e);
+    }
   };
 
   const addField = (field: Field) => {
@@ -60,7 +79,7 @@ export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   return (
-    <DocumentContext.Provider value={{ ...state, setFile, addField, updateField, removeField, setActiveField }}>
+    <DocumentContext.Provider value={{ ...state, setFile, setAppMode, loadConfig, addField, updateField, removeField, setActiveField }}>
       {children}
     </DocumentContext.Provider>
   );

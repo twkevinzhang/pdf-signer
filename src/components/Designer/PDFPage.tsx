@@ -12,7 +12,7 @@ interface PDFPageProps {
 }
 
 export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
-  const { fields, updateField, setActiveField } = useDocument();
+  const { fields, updateField, setActiveField, appMode } = useDocument();
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const renderTaskRef = useRef<any>(null);
@@ -37,16 +37,24 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
   const createFabricObject = (field: Field, canvasWidth: number, canvasHeight: number, onComplete: (obj: any) => void) => {
     const isSignature = field.type === 'signature';
     const isStamp = field.type === 'stamp';
+    const isSigner = appMode === 'signer';
     
+    const commonProps = {
+      left: field.x * canvasWidth,
+      top: field.y * canvasHeight,
+      data: { id: field.id },
+      hasControls: !isSigner,
+      lockMovementX: isSigner,
+      lockMovementY: isSigner,
+      hasRotatingPoint: false,
+    };
+
     if (isStamp && field.value) {
       FabricImage.fromURL(field.value).then((img: any) => {
         img.set({
-          left: field.x * canvasWidth,
-          top: field.y * canvasHeight,
+          ...commonProps,
           scaleX: (field.width * canvasWidth) / img.width!,
           scaleY: (field.height * canvasHeight) / img.height!,
-          data: { id: field.id },
-          hasRotatingPoint: false,
         });
         onComplete(img);
       });
@@ -54,8 +62,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     }
 
     const rect = new Rect({
-      left: field.x * canvasWidth,
-      top: field.y * canvasHeight,
+      ...commonProps,
       width: field.width * canvasWidth,
       height: field.height * canvasHeight,
       fill: isSignature ? 'rgba(0, 113, 227, 0.15)' : (isStamp ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 255, 255, 0.8)'),
@@ -63,7 +70,6 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       strokeWidth: 2,
       rx: 4,
       ry: 4,
-      data: { id: field.id },
     });
     
     onComplete(rect);

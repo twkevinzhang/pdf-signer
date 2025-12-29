@@ -55,22 +55,36 @@ const CheckboxGroup = styled.label`
 `;
 
 export const Inspector: React.FC = () => {
-  const { fields, activeFieldId, updateField, removeField } = useDocument();
+  const { fields, activeFieldId, updateField, removeField, appMode } = useDocument();
   const activeField = fields.find(f => f.id === activeFieldId);
+  const isDesigner = appMode === 'designer';
 
   if (!activeField) {
     return (
       <InspectorContainer>
         <div style={{ color: Theme.colors.secondary, textAlign: 'center', marginTop: 100 }}>
-          Select a field to edit its properties
+          {isDesigner ? 'Select a field to edit its properties' : 'Select a field to fill'}
         </div>
       </InspectorContainer>
     );
   }
 
+  const handleStampUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (prev) => {
+        updateField(activeField.id, { value: prev.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <InspectorContainer>
-      <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Field Properties</div>
+      <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+        {isDesigner ? 'Field Properties' : 'Fill Information'}
+      </div>
       
       <SectionTitle>General</SectionTitle>
       <PropertyGroup>
@@ -81,63 +95,57 @@ export const Inspector: React.FC = () => {
       </PropertyGroup>
 
       <PropertyGroup>
-        <Label>{activeField.type === 'stamp' ? 'Stamp Image' : 'Placeholder / Label'}</Label>
-        {activeField.type === 'stamp' ? (
+        <Label>{activeField.type === 'stamp' || activeField.type === 'signature' ? (isDesigner ? 'Placeholder (Optional)' : 'Upload Signature/Stamp') : 'Value'}</Label>
+        {activeField.type === 'stamp' || activeField.type === 'signature' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {activeField.value && (
               <img 
                 src={activeField.value} 
-                alt="Stamp" 
+                alt="Stamp/Signature" 
                 style={{ width: '100%', height: 'auto', borderRadius: 4, border: `1px solid ${Theme.colors.border}` }} 
               />
             )}
             <UIButton as="label" style={{ fontSize: 12, textAlign: 'center' }}>
-              Upload Image
+              {activeField.value ? 'Re-upload' : 'Upload Image'}
               <input 
                 type="file" 
                 hidden 
                 accept="image/*" 
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (prev) => {
-                      updateField(activeField.id, { value: prev.target?.result as string });
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }} 
+                onChange={handleStampUpload} 
               />
             </UIButton>
           </div>
         ) : (
           <Input 
-            disabled={activeField.type === 'signature'}
             value={activeField.value || ''} 
             onChange={(e) => updateField(activeField.id, { value: e.target.value })}
-            placeholder="Enter label..."
+            placeholder={activeField.type === 'date' ? 'YYYY-MM-DD' : 'Enter text...'}
           />
         )}
       </PropertyGroup>
 
-      <CheckboxGroup>
-        <input 
-          type="checkbox" 
-          checked={activeField.required} 
-          onChange={(e) => updateField(activeField.id, { required: e.target.checked })}
-        />
-        Required Field
-      </CheckboxGroup>
+      {isDesigner && (
+        <>
+          <CheckboxGroup>
+            <input 
+              type="checkbox" 
+              checked={activeField.required} 
+              onChange={(e) => updateField(activeField.id, { required: e.target.checked })}
+            />
+            Required Field
+          </CheckboxGroup>
 
-      <div style={{ flex: 1 }} />
+          <div style={{ flex: 1 }} />
 
-      <UIButton 
-        onClick={() => removeField(activeField.id)}
-        style={{ color: Theme.colors.danger, borderColor: Theme.colors.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-      >
-        <Trash2 size={16} />
-        Remove Field
-      </UIButton>
+          <UIButton 
+            onClick={() => removeField(activeField.id)}
+            style={{ color: Theme.colors.danger, borderColor: Theme.colors.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          >
+            <Trash2 size={16} />
+            Remove Field
+          </UIButton>
+        </>
+      )}
     </InspectorContainer>
   );
 };

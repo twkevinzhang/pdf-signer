@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { MousePointer2, Type, Signature, Calendar, Download, Image as ImageIcon } from 'lucide-react';
+import { MousePointer2, Type, Signature, Calendar, Download, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { Theme, UIButton } from '../../styles/DesignSystem';
 import { useDocument } from '../../application/DocumentStore';
 import { FieldFactory, FieldType } from '../../domain/entities/Field';
@@ -41,8 +41,18 @@ const ToolButton = styled.button<{ $active?: boolean }>`
   }
 `;
 
+const ProgressBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${Theme.colors.primary};
+  padding: 0 12px;
+`;
+
 export const DesignerToolbar: React.FC = () => {
-  const { addField, file, fields } = useDocument();
+  const { addField, file, fields, appMode } = useDocument();
   const [activeTool, setActiveTool] = useState<string>('select');
 
   const handleAddTool = (type: FieldType) => {
@@ -88,6 +98,10 @@ export const DesignerToolbar: React.FC = () => {
     URL.revokeObjectURL(jsonUrl);
   };
 
+  const requiredFields = fields.filter(f => f.required);
+  const filledFields = requiredFields.filter(f => !!f.value);
+  const isComplete = requiredFields.length > 0 && requiredFields.length === filledFields.length;
+
   return (
     <ToolbarContainer>
       <ToolButton 
@@ -96,45 +110,62 @@ export const DesignerToolbar: React.FC = () => {
       >
         <MousePointer2 size={20} />
       </ToolButton>
-      <div style={{ width: 1, height: 24, background: Theme.colors.border }} />
-      
-      <ToolButton 
-        $active={activeTool === 'signature'} 
-        onClick={() => handleAddTool('signature')}
-      >
-        <Signature size={20} />
-      </ToolButton>
-      
-      <ToolButton 
-        $active={activeTool === 'text'} 
-        onClick={() => handleAddTool('text')}
-      >
-        <Type size={20} />
-      </ToolButton>
-      
-      <ToolButton 
-        $active={activeTool === 'date'} 
-        onClick={() => handleAddTool('date')}
-      >
-        <Calendar size={20} />
-      </ToolButton>
 
-      <ToolButton 
-        $active={activeTool === 'stamp'} 
-        onClick={() => handleAddTool('stamp')}
-      >
-        <ImageIcon size={20} />
-      </ToolButton>
+      {appMode === 'designer' && (
+        <>
+          <div style={{ width: 1, height: 24, background: Theme.colors.border }} />
+          
+          <ToolButton 
+            $active={activeTool === 'signature'} 
+            onClick={() => handleAddTool('signature')}
+          >
+            <Signature size={20} />
+          </ToolButton>
+          
+          <ToolButton 
+            $active={activeTool === 'text'} 
+            onClick={() => handleAddTool('text')}
+          >
+            <Type size={20} />
+          </ToolButton>
+          
+          <ToolButton 
+            $active={activeTool === 'date'} 
+            onClick={() => handleAddTool('date')}
+          >
+            <Calendar size={20} />
+          </ToolButton>
+
+          <ToolButton 
+            $active={activeTool === 'stamp'} 
+            onClick={() => handleAddTool('stamp')}
+          >
+            <ImageIcon size={20} />
+          </ToolButton>
+        </>
+      )}
+
+      {appMode === 'signer' && requiredFields.length > 0 && (
+        <>
+          <div style={{ width: 1, height: 24, background: Theme.colors.border }} />
+          <ProgressBadge>
+            {isComplete ? <CheckCircle2 size={16} color="#34C759" /> : null}
+            {filledFields.length} / {requiredFields.length} Filled
+          </ProgressBadge>
+        </>
+      )}
       
       <div style={{ width: 1, height: 24, background: Theme.colors.border }} />
       
-      <UIButton style={{ height: 40 }} onClick={handleExportJson}>
-        Export JSON
-      </UIButton>
+      {appMode === 'designer' && (
+        <UIButton style={{ height: 40 }} onClick={handleExportJson}>
+          Export JSON
+        </UIButton>
+      )}
       
-      <UIButton $primary style={{ height: 40 }} onClick={handleExportPdf}>
+      <UIButton $primary style={{ height: 40 }} onClick={handleExportPdf} disabled={appMode === 'signer' && !isComplete}>
         <Download size={18} style={{ marginRight: 8 }} />
-        Export PDF
+        {appMode === 'signer' ? 'Complete & Export' : 'Export PDF'}
       </UIButton>
     </ToolbarContainer>
   );
