@@ -3,6 +3,7 @@ import { DocumentProvider, useDocument } from './application/DocumentStore';
 import { MainLayout, Sidebar, CanvasArea, Theme } from './styles/DesignSystem';
 import { DesignerToolbar } from './components/Designer/Toolbar';
 import { PDFPage } from './components/Designer/PDFPage';
+import { Inspector } from './components/Designer/Inspector';
 import { FileUp, Layers } from 'lucide-react';
 import styled from 'styled-components';
 
@@ -78,6 +79,7 @@ const SignatureApp: React.FC = () => {
           </>
         )}
       </CanvasArea>
+      <Inspector />
     </MainLayout>
   );
 };
