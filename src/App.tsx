@@ -1,217 +1,91 @@
 import React, { useEffect, useState } from 'react';
-import './App.css';
-import { Pdf, usePdf } from './hooks/usePdf';
-import { Button, Card, Col, Container, Nav, Row } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { useAttachments } from './hooks/useAttachments';
-import { AttachmentTypes } from './entities';
-import { Attachments as PageAttachments } from './components/Attachments';
-import { UploadTypes, useUploader } from './hooks/useUploader';
-import { v4 as uuidv4 } from 'uuid';
-import { CandidateImage } from './components/CandidateImage';
-import { useDrawer } from './hooks/useDrawer';
+import { DocumentProvider, useDocument } from './application/DocumentStore';
+import { MainLayout, Sidebar, CanvasArea, Theme } from './styles/DesignSystem';
+import { DesignerToolbar } from './components/Designer/Toolbar';
+import { PDFPage } from './components/Designer/PDFPage';
+import { FileUp, Layers } from 'lucide-react';
+import styled from 'styled-components';
 
-import { BsChevronLeft, BsChevronRight, BsFillCloudDownloadFill, BsFillCloudUploadFill } from 'react-icons/bs';
-import { mockPlacements } from './models/MockPlacements';
-import { getResizedAttachment, scaleTo, whichPlacement } from './utils/helpers';
-import { CandidateText } from './components/CandidateText';
-import { saveImageFile } from './utils/StorageService';
-import ReactInputPosition from "react-input-position";
-import { Clickable } from './components/Clickable';
-import { Page } from './components/Page';
-import { Scrollable } from './components/Scrollable';
+const UploadPlaceholder = styled.label`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px;
+  border: 2px dashed ${Theme.colors.border};
+  border-radius: ${Theme.radius.large};
+  cursor: pointer;
+  transition: all 0.3s;
+  color: ${Theme.colors.secondary};
 
-const App: React.FC<{}> = () => {
-  const [ scale, setScale ] = useState(1.65);
-  const [ handleAttachment, setHandleAttachment ] = useState<Attachment | undefined>();
-  const { file, setPdf, pageIndex, isMultiPage, isFirstPage, isLastPage, currentPage, isSaving, savePdf, previousPage, nextPage, setDimensions, name, dimensions } = usePdf();
-  const { allCandidates, removeAllImages, refresh: refreshDrawer } = useDrawer();
-  const { addAttachment, allPageAttachments, pageAttachments, resetAttachments, updateAttachments, removeAttachments, setPageIndex } = useAttachments();
-  const isPdfLoaded = !!file
+  &:hover {
+    border-color: ${Theme.colors.primary};
+    background: rgba(0, 113, 227, 0.02);
+  }
+`;
 
-  const { inputRef: pdfRef, handleUpload: handlePdfUpload, fileOnChange: pdfOnChange } = useUploader({
-    use: UploadTypes.PDF,
-    afterUploadPdf: (uploaded: Pdf)=>{
-      setPdf(uploaded);
-      const numberOfPages = uploaded.pages.length;
-      resetAttachments(numberOfPages)
-    }
-  });
+const SignatureApp: React.FC = () => {
+  const { pdfDocument, setFile } = useDocument();
+  const [pages, setPages] = useState<any[]>([]);
 
-  const { inputRef: imgRef, handleUpload: handleImageUpload, fileOnChange: imgOnChange } = useUploader({
-    use: UploadTypes.IMAGE,
-    afterUploadImage: (attachment: ImageAttachment)=>{
-        saveImageFile(attachment.file, attachment.id).then(()=>refreshDrawer());
-        setHandleAttachment(attachment)
+  useEffect(() => {
+    const loadPages = async () => {
+      if (!pdfDocument) return;
+      const loadedPages = [];
+      for (let i = 1; i <= pdfDocument.numPages; i++) {
+        loadedPages.push(await pdfDocument.getPage(i));
       }
-  });
-
-  useEffect(() => setPageIndex(pageIndex), [pageIndex, setPageIndex]);
-
-  const handleText = () => {
-    const newTextAttachment: TextAttachment = {
-      id: uuidv4(),
-      type: AttachmentTypes.TEXT,
-      x: 0,
-      y: 0,
-      width: 120,
-      height: 25,
-      fontSize: 16,
-      lineHeight: 1.4,
-      fontFamily: 'Times-Roman',
-      text: 'Enter Text Here',
+      setPages(loadedPages);
     };
-    setHandleAttachment(newTextAttachment)
+    loadPages();
+  }, [pdfDocument]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setFile(file);
   };
 
-  const handleSave = () => savePdf(allPageAttachments)
+  return (
+    <MainLayout>
+      <Sidebar>
+        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 32, color: '#1d1d1f' }}>
+          PDF Signer
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: Theme.colors.secondary, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          <Layers size={14} /> Pages
+        </div>
+        {/* 這裡未來可以放頁面縮圖 */}
+      </Sidebar>
 
-  const message =
-    handleAttachment? "點擊 PDF 的某處來新增附件": "這些圖片被儲存在 local 的 IndexedDB。"
-
-  const hiddenInputs = (
-    <>
-      <input
-        ref={pdfRef}
-        type="file"
-        accept="application/pdf"
-        onChange={pdfOnChange}
-        style={{ display: 'none' }}
-      />
-      <input
-        ref={imgRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={imgOnChange}
-      />
-    </>
-  )
-
-  let previousButtonStyle= {}
-  if(!isMultiPage || isFirstPage){
-    previousButtonStyle={
-      visibility:'hidden'
-    }
-  }
-
-  let nextPageStyle= {}
-  if(!isMultiPage || isLastPage){
-    nextPageStyle={
-      visibility:'hidden'
-    }
-  }
-
-    return (
-    <div className="App">
-      {hiddenInputs}
-
-      <Container fluid>
-        {!isPdfLoaded && (<>
-        <Row className='justify-content-center mt-lg-5'>
-          <div>
-            <h3>上傳一份 Pdf！</h3>
-            <Button onClick={handlePdfUpload}><BsFillCloudUploadFill /> Upload</Button>
-          </div>
-        </Row>
-        </>)}
-        <Row>
-          <Col sm={3}>
-            {isPdfLoaded && (
-              <div className="flex-nowrap" style={{
-                overflowY: 'scroll',
-                height: '100vh',
-              }}>
-              <h3>加入附件</h3>
-              <p>
-                {message}
-                <Button variant="link" onClick={removeAllImages}>清空圖片</Button>
-              </p>
-              <CandidateText
-                active={handleAttachment?.type === AttachmentTypes.TEXT}
-                scale={scale}
-                onClick={handleText}>
-                新增文字
-              </CandidateText>
-              {allCandidates
-                .filter(attachment=>attachment.type === AttachmentTypes.IMAGE)
-                .map(attachment=>{
-                  console.log(handleAttachment?.id)
-                  return <div key={attachment.id} id={attachment.id}><CandidateImage
-                    active={handleAttachment?.id === attachment.id}
-                    onClick={()=>{
-                      setHandleAttachment(attachment)
-                    }}
-                    attachment={attachment as ImageAttachment}
-                    scale={scale}
-                  /></div>
-                })
-              }
-              <CandidateText scale={scale} onClick={handleImageUpload}>
-                上傳圖片
-              </CandidateText>
-            </div>)}
-          </Col>
-          <Col sm={9} className='position-relative'>
-            <div className="d-flex justify-content-between align-items-center" style={{
-              height: '7vh',
-              minHeight: "40px",
-            }}>
-              <div>
-                <Button style={previousButtonStyle} className='rounded-circle' variant="outline-dark" onClick={previousPage}><BsChevronLeft /></Button>
-              </div>
-              <div>
-                {isPdfLoaded && (<Nav className="justify-content-center">
-                  <Nav.Link onClick={handlePdfUpload}><BsFillCloudUploadFill /> Upload New</Nav.Link>
-                  <Nav.Link onClick={handleSave}><BsFillCloudDownloadFill /> Save </Nav.Link>
-                </Nav>)}
-              </div>
-
-              <div>
-                <Button style={nextPageStyle} className='rounded-circle' variant="outline-dark" onClick={nextPage}><BsChevronRight /></Button>
-              </div>
+      <CanvasArea>
+        {!pdfDocument ? (
+          <UploadPlaceholder>
+            <input type="file" hidden accept="application/pdf" onChange={handleFileChange} />
+            <FileUp size={48} color={Theme.colors.primary} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 600, color: '#1d1d1f' }}>Upload PDF Contract</div>
+              <div style={{ fontSize: 14 }}>Drag and drop or click to browse</div>
             </div>
-            <Scrollable>
-            { currentPage && (
-              <ReactInputPosition
-                trackPassivePosition={true}
-                cursorStyle={handleAttachment ? undefined : 'default'}
-              >
-                <Clickable
-                  handleAttachment={handleAttachment}
-                  addAttachment={addAttachment}
-                  scale={scale}
-                >
-                  <Card
-                    style={{
-                      display: 'table', // for look more compact
-                    }}
-                  >
-                    <Page
-                      dimensions={dimensions}
-                      setDimensions={setDimensions}
-                      page={currentPage}
-                      scale={scale}
-                    />
-                    { dimensions && (
-                      <PageAttachments
-                        removeAttachment={removeAttachments}
-                        updateAttachment={updateAttachments}
-                        pageDimensions={dimensions}
-                        attachments={pageAttachments}
-                        placements={mockPlacements()}
-                        scale={scale} />
-                    )}
-                  </Card>
-                </Clickable>
-              </ReactInputPosition>
-            )}
-            </Scrollable>
-          </Col>
-        </Row>
-      </Container>
-    </div>
+          </UploadPlaceholder>
+        ) : (
+          <>
+            <DesignerToolbar />
+            <div style={{ width: '100%', maxWidth: 1000 }}>
+              {pages.map((page, index) => (
+                <PDFPage key={index} page={page} />
+              ))}
+            </div>
+          </>
+        )}
+      </CanvasArea>
+    </MainLayout>
+  );
+};
+
+export default function App() {
+  return (
+    <DocumentProvider>
+      <SignatureApp />
+    </DocumentProvider>
   );
 }
-
-export default App;
