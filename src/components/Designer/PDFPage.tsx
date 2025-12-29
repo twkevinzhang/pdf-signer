@@ -15,6 +15,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
   const { fields, updateField, setActiveField } = useDocument();
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
+  const renderTaskRef = useRef<any>(null);
 
   const syncFieldToDomain = (obj: any) => {
     const canvas = fabricRef.current;
@@ -108,22 +109,38 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     const canvas = pdfCanvasRef.current;
     if (!canvas) return;
 
+    if (renderTaskRef.current) {
+      renderTaskRef.current.cancel();
+    }
+
     const viewport = page.getViewport({ scale });
     canvas.width = viewport.width;
     canvas.height = viewport.height;
 
-    await page.render({ 
+    const renderTask = page.render({ 
       canvasContext: canvas.getContext('2d')!, 
       viewport,
       canvas 
-    }).promise;
+    });
     
-    initializeFabric(viewport.width, viewport.height);
+    renderTaskRef.current = renderTask;
+
+    try {
+      await renderTask.promise;
+      initializeFabric(viewport.width, viewport.height);
+    } catch (error: any) {
+      if (error.name !== 'RenderingCancelledException') {
+        console.error('PDF rendering error:', error);
+      }
+    }
   };
 
   useEffect(() => {
     renderPdfAndInit();
     return () => {
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+      }
       if (fabricRef.current) {
         fabricRef.current.dispose();
       }

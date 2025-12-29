@@ -43,12 +43,12 @@ const ThumbnailContainer = styled.div`
   padding: 0 24px;
 `;
 
-const ThumbnailItem = styled.div<{ active?: boolean }>`
+const ThumbnailItem = styled.div<{ $active?: boolean }>`
   width: 100%;
   aspect-ratio: 1 / 1.4;
   background: #fff;
   border-radius: ${Theme.radius.small};
-  border: 2px solid ${props => props.active ? Theme.colors.primary : Theme.colors.border};
+  border: 2px solid ${props => props.$active ? Theme.colors.primary : Theme.colors.border};
   cursor: pointer;
   overflow: hidden;
   transition: all 0.2s;
@@ -113,7 +113,7 @@ export const Sidebar: React.FC = () => {
 
       <ThumbnailContainer>
         {thumbnails.map((url, i) => (
-          <ThumbnailItem key={i} active={i === 0}>
+          <ThumbnailItem key={i} $active={i === 0}>
             <img src={url} alt={`Page ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <PageNumber>{i + 1}</PageNumber>
           </ThumbnailItem>

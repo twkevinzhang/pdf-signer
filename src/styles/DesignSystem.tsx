@@ -47,10 +47,10 @@ export const CanvasArea = styled.main`
   align-items: center;
 `;
 
-export const UIButton = styled.button<{ primary?: boolean }>`
-  background: ${props => props.primary ? Theme.colors.primary : 'transparent'};
-  color: ${props => props.primary ? '#fff' : Theme.colors.primary};
-  border: ${props => props.primary ? 'none' : `1px solid ${Theme.colors.primary}`};
+export const UIButton = styled.button<{ $primary?: boolean }>`
+  background: ${props => props.$primary ? Theme.colors.primary : 'transparent'};
+  color: ${props => props.$primary ? '#fff' : Theme.colors.primary};
+  border: ${props => props.$primary ? 'none' : `1px solid ${Theme.colors.primary}`};
   padding: 10px 20px;
   border-radius: ${Theme.radius.medium};
   font-size: 14px;

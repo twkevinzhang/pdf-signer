@@ -23,9 +23,9 @@ const ToolbarContainer = styled.div`
   box-shadow: ${Theme.shadows.medium};
 `;
 
-const ToolButton = styled.button<{ active?: boolean }>`
-  background: ${props => props.active ? Theme.colors.primary : 'transparent'};
-  color: ${props => props.active ? '#fff' : Theme.colors.secondary};
+const ToolButton = styled.button<{ $active?: boolean }>`
+  background: ${props => props.$active ? Theme.colors.primary : 'transparent'};
+  color: ${props => props.$active ? '#fff' : Theme.colors.secondary};
   border: none;
   width: 40px;
   height: 40px;
@@ -37,7 +37,7 @@ const ToolButton = styled.button<{ active?: boolean }>`
   transition: all 0.2s;
 
   &:hover {
-    background: ${props => props.active ? Theme.colors.primary : 'rgba(0,0,0,0.05)'};
+    background: ${props => props.$active ? Theme.colors.primary : 'rgba(0,0,0,0.05)'};
   }
 `;
 
@@ -51,21 +51,47 @@ export const DesignerToolbar: React.FC = () => {
     addField(newField);
   };
 
-  const handleExport = async () => {
+  const handleExportPdf = async () => {
     if (!file) return;
     const bytes = await PdfExportService.export(file, fields);
-    const blob = new Blob([bytes] as any, { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `signed-${file.name}`;
-    link.click();
+    const pdfBlob = new Blob([bytes] as any, { type: 'application/pdf' });
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    const pdfLink = document.createElement('a');
+    pdfLink.href = pdfUrl;
+    pdfLink.download = `signed-${file.name}`;
+    pdfLink.click();
+    URL.revokeObjectURL(pdfUrl);
+  };
+
+  const handleExportJson = () => {
+    if (!file) return;
+    const jsonContent = JSON.stringify({
+      documentName: file.name,
+      fields: fields.map(f => ({
+        id: f.id,
+        type: f.type,
+        page: f.page,
+        x: f.x,
+        y: f.y,
+        width: f.width,
+        height: f.height,
+        required: f.required,
+        value: f.value
+      }))
+    }, null, 2);
+    const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
+    const jsonUrl = URL.createObjectURL(jsonBlob);
+    const jsonLink = document.createElement('a');
+    jsonLink.href = jsonUrl;
+    jsonLink.download = `config-${file.name.replace('.pdf', '')}.json`;
+    jsonLink.click();
+    URL.revokeObjectURL(jsonUrl);
   };
 
   return (
     <ToolbarContainer>
       <ToolButton 
-        active={activeTool === 'select'} 
+        $active={activeTool === 'select'} 
         onClick={() => setActiveTool('select')}
       >
         <MousePointer2 size={20} />
@@ -73,21 +99,21 @@ export const DesignerToolbar: React.FC = () => {
       <div style={{ width: 1, height: 24, background: Theme.colors.border }} />
       
       <ToolButton 
-        active={activeTool === 'signature'} 
+        $active={activeTool === 'signature'} 
         onClick={() => handleAddTool('signature')}
       >
         <Signature size={20} />
       </ToolButton>
       
       <ToolButton 
-        active={activeTool === 'text'} 
+        $active={activeTool === 'text'} 
         onClick={() => handleAddTool('text')}
       >
         <Type size={20} />
       </ToolButton>
       
       <ToolButton 
-        active={activeTool === 'date'} 
+        $active={activeTool === 'date'} 
         onClick={() => handleAddTool('date')}
       >
         <Calendar size={20} />
@@ -95,7 +121,11 @@ export const DesignerToolbar: React.FC = () => {
       
       <div style={{ width: 1, height: 24, background: Theme.colors.border }} />
       
-      <UIButton primary style={{ height: 40 }} onClick={handleExport}>
+      <UIButton style={{ height: 40 }} onClick={handleExportJson}>
+        Export JSON
+      </UIButton>
+      
+      <UIButton $primary style={{ height: 40 }} onClick={handleExportPdf}>
         <Download size={18} style={{ marginRight: 8 }} />
         Export PDF
       </UIButton>
