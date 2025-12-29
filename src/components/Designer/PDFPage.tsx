@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as pdfjs from 'pdfjs-dist';
-import { Canvas, Rect, TEvent, FabricImage } from 'fabric';
+import { Canvas, Rect, TEvent, FabricImage, IText } from 'fabric';
 import { Theme } from '../../styles/DesignSystem';
 import { useDocument } from '../../application/DocumentStore';
 import { NormalizedCoordinate } from '../../domain/value-objects/Coordinate';
@@ -61,6 +61,18 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
       return;
     }
 
+    if ((field.type === 'text' || field.type === 'date') && field.value) {
+      const text = new IText(field.value, {
+        ...commonProps,
+        fontSize: 14,
+        fontFamily: 'Helvetica',
+        fill: '#000',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      });
+      onComplete(text);
+      return;
+    }
+
     const rect = new Rect({
       ...commonProps,
       width: field.width * canvasWidth,
@@ -92,12 +104,22 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
     pageFields.forEach(field => {
       const existing = existingObjects.find((obj: any) => obj.get('data')?.id === field.id);
       
-      // If signature value changed (upload/replacement), we might need recreation
+      // If value presence changed, we might need recreation (Rect -> Image/Text or vice-versa)
       const isSignature = field.type === 'signature';
-      const needsRecreation = isSignature && existing && ((field.value && !existing.isType('image')) || (!field.value && existing.isType('image')));
+      const isText = field.type === 'text' || field.type === 'date';
+      const hasValue = !!field.value;
+      
+      let needsRecreation = false;
+      if (existing) {
+        if (isSignature) {
+          needsRecreation = hasValue !== existing.isType('image');
+        } else if (isText) {
+          needsRecreation = hasValue !== existing.isType('i-text');
+        }
+      }
 
       if (!existing || needsRecreation) {
-        if (needsRecreation) canvas.remove(existing);
+        if (needsRecreation) canvas.remove(existing!);
         createFabricObject(field, canvas.width!, canvas.height!, (obj) => {
           canvas.add(obj);
           canvas.renderAll();
@@ -114,6 +136,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({ page, scale = 1.2 }) => {
               scaleX: (field.width * canvas.width!) / existing.width!,
               scaleY: (field.height * canvas.height!) / existing.height!,
             });
+          } else if (existing.isType('i-text')) {
+            existing.set({ text: field.value || '' });
           } else {
             existing.set({
               width: (field.width * canvas.width!) / (existing.scaleX || 1),
