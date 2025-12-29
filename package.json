@@ -1,8 +1,8 @@
 {
-  "name": "pdf-editor",
+  "name": "pdf-signer",
   "version": "0.1.2",
   "private": true,
-  "homepage": "https://neslxzhen.github.io/pdf-editor",
+  "homepage": "https://twkevinzhang.github.io/pdf-signer",
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@types/react-bootstrap": "^0.32.28",
